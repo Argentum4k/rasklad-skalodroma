@@ -66,6 +66,8 @@ export const generateRandomPoints = (width, height, numberOfPoints) => {
                 if (points.length >= numberOfPoints) {
                     return points;
                 }
+            } else {
+                col --;
             }
         }
     }

@@ -11,15 +11,20 @@ const PointDisplay = () => {
     const [tooltip, setTooltip] = useState({visible: false, x: 0, y: 0, coordinates: ''});
     const [zoom, setZoom] = useState(2.5);
     const [draggedPoint, setDraggedPoint] = useState(null);
+    const [bgImg, setBgImg] = useState(null);
+    const [ready, setReady] = useState(false);
+
+    const saveToUrl = () => {
+        const encodedPoints = encodePoints(points);
+        const shareableUrl = `${window.location.origin}/?data=${encodedPoints}`;
+        history.pushState(null, '', shareableUrl);
+    }
 
     const handleGenerateClick = () => {
         const calculatedPoints = Math.ceil((width * height) / 10000 * 7); // 7 точек на квадратный метр
         setNumberOfPoints(calculatedPoints);
         const newPoints = generateRandomPoints(width, height, numberOfPoints);
         setPoints(newPoints);
-        const encodedPoints = encodePoints(newPoints);
-        const shareableUrl = `${window.location.origin}/?data=${encodedPoints}`;
-        history.pushState(null, '', shareableUrl);
     };
 
     useEffect(() => {
@@ -28,8 +33,16 @@ const PointDisplay = () => {
             const encodedData = urlParams.get('data');
             const decodedPoints = decodePoints(encodedData);
             setPoints(decodedPoints);
+            setNumberOfPoints(decodedPoints.length);
+            console.log('inside');
         }
+        console.log('outside');
+        setReady(true);
     }, [])
+
+    useEffect(() => {
+        if(ready)saveToUrl();
+    },[points, points.length])
 
     const handleDragStart = (index) => {
         setDraggedPoint(index);
@@ -43,8 +56,8 @@ const PointDisplay = () => {
     const handleDrag = (e) => {
         if (draggedPoint !== null) {
             const rect = e.target.getBoundingClientRect();
-            const x = (e.clientX - rect.left)/ zoom;
-            const y = (e.clientY - rect.top)/ zoom;
+            const x = (e.clientX - rect.left) / zoom;
+            const y = (e.clientY - rect.top) / zoom;
 
             // Ensure the point stays within the bounds of the rectangle
             const boundedX = Math.max(0, Math.min(x, width - 5));
@@ -53,23 +66,30 @@ const PointDisplay = () => {
             setPoints((prevPoints) => {
                 const updatedPoints = [...prevPoints];
                 const oldPoint = updatedPoints[draggedPoint];
-                updatedPoints[draggedPoint] = { x: boundedX, y: boundedY, offsetX: oldPoint.x, offsetY: oldPoint.y, size: oldPoint.size };
+                updatedPoints[draggedPoint] = {
+                    x: boundedX,
+                    y: boundedY,
+                    offsetX: oldPoint.x,
+                    offsetY: oldPoint.y,
+                    size: oldPoint.size
+                };
                 return updatedPoints;
             });
         }
     };
 
     function clickPoint(point) {
-        console.log('clickPoint',point.size);
-       point.size = (point.size + 1)%3;
-    console.log('clickPoint2',point.size);
+        console.log('clickPoint', point.size);
+        point.size = (point.size + 1) % 3;
+        console.log('clickPoint2', point.size);
     }
 
-    function onAddPoint(){
+    function onAddPoint() {
         setPoints((prevPoints) => prevPoints.concat(generateRandomPoints(width, height, 1)));
         setNumberOfPoints(numberOfPoints + 1);
     }
-    function onRemovePoint(){
+
+    function onRemovePoint() {
         setPoints((prevPoints) => prevPoints.slice(0, -1));
         setNumberOfPoints(numberOfPoints - 1);
     }
@@ -95,14 +115,14 @@ const PointDisplay = () => {
                     <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                             onClick={() => setShowCoordinates(!showCoordinates)}>
                         {showCoordinates ? 'Скрыть координаты' : 'Показать координаты'}</button>
-                    <p>Количество точек: {numberOfPoints}</p>
+                    <p>Количество точек: {points.length}</p>
                     <div className="space-x-1">
                         <button onClick={onAddPoint}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Добавить
                         </button>
                         <button onClick={onRemovePoint}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Убрать
                         </button>
                     </div>
@@ -117,45 +137,49 @@ const PointDisplay = () => {
                                 onClick={() => setZoom(zoom + 0.1)}>+
                         </button>
                     </div>
+                    <span>добавить фон:</span>
+                    <input type={'file'} onChange={(e) => setBgImg(e.target.files[0])}/>
 
                 </div>
-                <div className="col-span-3"
+                <div className="скалодром"
                      style={{
                          // transform: `scale(${zoom})`,
                          // transformOrigin: '0 0',
                          position: 'relative',
-                         width: `${width*zoom}px`,
-                         height: `${height*zoom}px`,
+                         width: `${width * zoom}px`,
+                         height: `${height * zoom}px`,
                          border: '2px solid black',
+                         backgroundSize: 'cover',
+                         backgroundImage: bgImg? `url(${URL.createObjectURL(bgImg)})` : 'none',
                          // zoom: zoom,
                      }}
-                         onMouseMove={handleDrag}
-                         onMouseUp={handleDragEnd}
-                         onMouseLeave={handleDragEnd}
-                     >
+                     onMouseMove={handleDrag}
+                     onMouseUp={handleDragEnd}
+                     onMouseLeave={handleDragEnd}
+                >
                     {points.map((point, index) => (
                         <div
                             key={index}
                             style={{
                                 position: 'absolute',
-                                left: point.x*zoom,
-                                top: point.y*zoom,
-                                width: (point.size*3+6)*zoom+'px',
-                                height: (point.size*3+6)*zoom+'px',
-                                backgroundColor: point.size===0?'red':point.size===1?'orange':'green',
+                                left: point.x * zoom,
+                                top: point.y * zoom,
+                                width: (point.size * 3 + 6) * zoom + 'px',
+                                height: (point.size * 3 + 6) * zoom + 'px',
+                                backgroundColor: point.size === 0 ? 'red' : point.size === 1 ? 'orange' : 'green',
                                 borderRadius: '50%',
                                 cursor: 'pointer',
                                 translate: '-50% -50%',
                             }}
                             onMouseEnter={() => setTooltip({
                                 visible: true,
-                                x: point.x*zoom,
-                                y: point.y*zoom,
+                                x: point.x * zoom,
+                                y: point.y * zoom,
                                 coordinates: `X: ${point.x.toFixed(1)} см, Y: ${point.y.toFixed(1)} см`
                             })}
                             onMouseLeave={() => setTooltip({...tooltip, visible: false})}
                             onMouseDown={() => handleDragStart(index)}
-                            onClick={()=>clickPoint(point)}
+                            onClick={() => clickPoint(point)}
                             title={` X=${point.offsetX} см, Y=${point.offsetY} см`}
                         >
                             {showCoordinates && (
