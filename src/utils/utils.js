@@ -1,38 +1,5 @@
 
 
-// const generateRandomPoints = (width, height, numberOfPoints) => {
-//     const points = [];
-//     const cols = Math.ceil(Math.sqrt(numberOfPoints));
-//     const rows = Math.ceil(numberOfPoints / cols);
-//     const rectWidth = width / cols;
-//     const rectHeight = height / rows;
-//
-//     for (let row = 0; row < rows; row++) {
-//         for (let col = 0; col < cols; col++) {
-//             if (points.length >= numberOfPoints) break;
-//
-//             const centerX = col * rectWidth + rectWidth / 2;
-//             const centerY = row * rectHeight + rectHeight / 2;
-//             const offsetX = (Math.random() * 30) - 15; // Смещение в пределах 15 см
-//             const offsetY = (Math.random() * 30) - 15;
-//
-//             const pointX = centerX + offsetX;
-//             const pointY = centerY + offsetY;
-//
-//             // Проверка выхода за пределы
-//             if (pointX >= 0 && pointX <= width && pointY >= 0 && pointY <= height) {
-//                 points.push({
-//                     x: pointX,
-//                     y: pointY,
-//                     offsetX: offsetX.toFixed(2),
-//                     offsetY: offsetY.toFixed(2),
-//                 });
-//             }
-//         }
-//     }
-//     return points;
-// };
-
 export const generateRandomPoints = (width, height, numberOfPoints) => {
     const points = [];
     const cols = Math.ceil(Math.sqrt(numberOfPoints)); // Количество столбцов
@@ -57,8 +24,8 @@ export const generateRandomPoints = (width, height, numberOfPoints) => {
                 points.push({
                     x: pointX,
                     y: pointY,
-                    offsetX: offsetX.toFixed(2),
-                    offsetY: offsetY.toFixed(2),
+                    // offsetX: offsetX.toFixed(2),
+                    // offsetY: offsetY.toFixed(2),
                     size: 0,
                     color: 0,
                 });

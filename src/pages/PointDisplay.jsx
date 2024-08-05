@@ -15,6 +15,24 @@ const PointDisplay = () => {
     const [ready, setReady] = useState(false);
     const [holdStarter, setHoldStarter] = useState(null);
 
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('data')) {
+            const encodedData = urlParams.get('data');
+            const decodedPoints = decodePoints(encodedData);
+            setPoints(decodedPoints);
+            setNumberOfPoints(decodedPoints.length);
+        }
+        setReady(true);
+        // setInterval(()=>{console.log(points,points[5])}, 3000);// пачму пустооо
+    }, [])
+
+    useEffect(() => {
+        if (ready && !draggedPoint) saveToUrl();
+    }, [points, points.length])
+
+
     const saveToUrl = () => {
         const encodedPoints = encodePoints(points);
         // const shareableUrl = `${window.location.origin}/?data=${encodedPoints}`; // попадает на корень гх а не на себя
@@ -31,25 +49,9 @@ const PointDisplay = () => {
         setPoints(newPoints);
     };
 
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('data')) {
-            const encodedData = urlParams.get('data');
-            const decodedPoints = decodePoints(encodedData);
-            setPoints(decodedPoints);
-            setNumberOfPoints(decodedPoints.length);
-            console.log('inside');
-        }
-        console.log('outside');
-        setReady(true);
-    }, [])
-
-    useEffect(() => {
-        if (ready) saveToUrl();
-    }, [points, points.length])
-
     const handleDragStart = (index) => {
         setDraggedPoint(index);
+        console.log(index, points[index]);
         setHoldStarter(setTimeout(function () {
             setHoldStarter(null);
         }, holdDelay))
@@ -63,27 +65,23 @@ const PointDisplay = () => {
         }
     };
 
-
     const handleDrag = (e) => {
         if (draggedPoint !== null) {
             const rect = e.target.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / zoom;
-            const y = (e.clientY - rect.top) / zoom;
+            const x =((e.clientX - rect.left) / zoom);
+            const y = ((e.clientY - rect.top) / zoom);
 
             // Ensure the point stays within the bounds of the rectangle
-            const boundedX = Math.max(0, Math.min(x, width - 5));
-            const boundedY = Math.max(0, Math.min(y, height - 5));
+            const boundedX = Math.max(5, Math.min(x, width - 5));
+            const boundedY = Math.max(5, Math.min(y, height - 5));
 
             setPoints((prevPoints) => {
                 const updatedPoints = [...prevPoints];
                 const oldPoint = updatedPoints[draggedPoint];
                 updatedPoints[draggedPoint] = {
+                    ...oldPoint,
                     x: boundedX,
                     y: boundedY,
-                    offsetX: oldPoint.x,
-                    offsetY: oldPoint.y,
-                    size: oldPoint.size,
-                    color: oldPoint.color,
                 };
                 return updatedPoints;
             });
@@ -117,7 +115,7 @@ const PointDisplay = () => {
     return (
         <>
             <h1 className="text-3xl font-bold underline mb-8">Генерация точек на поверхности скалодрома</h1>
-            <div className="flex justify-center gap-8">
+            <div className="sm:flex justify-center gap-8 space-y-4">
                 <div className="flex flex-col gap-4 items-start">
                     <label htmlFor={'width'}>
                         Ширина (см):
