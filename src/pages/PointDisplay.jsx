@@ -16,8 +16,11 @@ const PointDisplay = () => {
 
     const saveToUrl = () => {
         const encodedPoints = encodePoints(points);
-        const shareableUrl = `${window.location.origin}/?data=${encodedPoints}`;
-        history.pushState(null, '', shareableUrl);
+        // const shareableUrl = `${window.location.origin}/?data=${encodedPoints}`; // попадает на корень гх а не на себя
+        // history.pushState(null, '', shareableUrl);
+        const url = new URL(window.location);
+        url.searchParams.set('data', encodedPoints);
+        window.history.pushState({}, '', url);
     }
 
     const handleGenerateClick = () => {
@@ -41,8 +44,8 @@ const PointDisplay = () => {
     }, [])
 
     useEffect(() => {
-        if(ready)saveToUrl();
-    },[points, points.length])
+        if (ready) saveToUrl();
+    }, [points, points.length])
 
     const handleDragStart = (index) => {
         setDraggedPoint(index);
@@ -150,7 +153,7 @@ const PointDisplay = () => {
                          height: `${height * zoom}px`,
                          border: '2px solid black',
                          backgroundSize: 'cover',
-                         backgroundImage: bgImg? `url(${URL.createObjectURL(bgImg)})` : 'none',
+                         backgroundImage: bgImg ? `url(${URL.createObjectURL(bgImg)})` : 'none',
                          // zoom: zoom,
                      }}
                      onMouseMove={handleDrag}
@@ -175,7 +178,11 @@ const PointDisplay = () => {
                                 visible: true,
                                 x: point.x * zoom,
                                 y: point.y * zoom,
-                                coordinates: `X: ${point.x.toFixed(1)} см, Y: ${point.y.toFixed(1)} см`
+                                coordinates: {  left: point.x.toFixed(1) +'см',
+                                                top: point.y.toFixed(1) +'см',
+                                right: width - point.x.toFixed(1) +'см',
+                                bottom: height - point.y.toFixed(1) +'см'}
+
                             })}
                             onMouseLeave={() => setTooltip({...tooltip, visible: false})}
                             onMouseDown={() => handleDragStart(index)}
@@ -212,8 +219,12 @@ const PointDisplay = () => {
                             boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.2)',
                             pointerEvents: 'none',
                             fontSize: '12px',
+                            textAlign:'left'
                         }}>
-                            {tooltip.coordinates}
+                           <p>top: {tooltip.coordinates.top}</p>
+                           <p>left: {tooltip.coordinates.left}</p>
+                           <p>bottom: {tooltip.coordinates.bottom}</p>
+                           <p>right: {tooltip.coordinates.right}</p>
                         </div>
                     )}
                 </div>
