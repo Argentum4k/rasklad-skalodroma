@@ -60,6 +60,7 @@ export const generateRandomPoints = (width, height, numberOfPoints) => {
                     offsetX: offsetX.toFixed(2),
                     offsetY: offsetY.toFixed(2),
                     size: 0,
+                    color: 0,
                 });
 
                 // Проверка на количество точек, чтобы не превышать его

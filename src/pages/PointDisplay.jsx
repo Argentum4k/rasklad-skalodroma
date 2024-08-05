@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {decodePoints, encodePoints, generateRandomPoints} from "../utils/utils.js";
 
-
+const holdDelay = 200;
 const PointDisplay = () => {
     const [width, setWidth] = useState(150); // начальная ширина в см
     const [height, setHeight] = useState(265); // начальная высота в см
@@ -13,6 +13,7 @@ const PointDisplay = () => {
     const [draggedPoint, setDraggedPoint] = useState(null);
     const [bgImg, setBgImg] = useState(null);
     const [ready, setReady] = useState(false);
+    const [holdStarter, setHoldStarter] = useState(null);
 
     const saveToUrl = () => {
         const encodedPoints = encodePoints(points);
@@ -49,10 +50,17 @@ const PointDisplay = () => {
 
     const handleDragStart = (index) => {
         setDraggedPoint(index);
+        setHoldStarter(setTimeout(function () {
+            setHoldStarter(null);
+        }, holdDelay))
     };
 
     const handleDragEnd = () => {
-        setDraggedPoint(null);
+        setDraggedPoint(null)
+        if (holdStarter) {
+            clearTimeout(holdStarter);
+            // run click-only operation here
+        }
     };
 
 
@@ -74,17 +82,26 @@ const PointDisplay = () => {
                     y: boundedY,
                     offsetX: oldPoint.x,
                     offsetY: oldPoint.y,
-                    size: oldPoint.size
+                    size: oldPoint.size,
+                    color: oldPoint.color,
                 };
                 return updatedPoints;
             });
         }
     };
 
-    function clickPoint(point) {
-        console.log('clickPoint', point.size);
-        point.size = (point.size + 1) % 3;
-        console.log('clickPoint2', point.size);
+    function resizePoint(point) {
+        if (holdStarter) {
+            point.size = (point.size + 1) % 3;
+            saveToUrl();
+        }
+    }
+
+    function recolorPoint(e, point) {
+        e.preventDefault();
+        if(point.color) point.color = (point.color + 1) % 3;
+        else point.color = 1;
+        saveToUrl();
     }
 
     function onAddPoint() {
@@ -169,7 +186,8 @@ const PointDisplay = () => {
                                 top: point.y * zoom,
                                 width: (point.size * 3 + 6) * zoom + 'px',
                                 height: (point.size * 3 + 6) * zoom + 'px',
-                                backgroundColor: point.size === 0 ? 'red' : point.size === 1 ? 'orange' : 'green',
+                                backgroundColor: point.color? ['red', 'orange', 'green'][point.color] : 'red',
+                                // backgroundColor: point.size === 0 ? 'red' : point.size === 1 ? 'orange' : 'green',
                                 borderRadius: '50%',
                                 cursor: 'pointer',
                                 translate: '-50% -50%',
@@ -178,16 +196,19 @@ const PointDisplay = () => {
                                 visible: true,
                                 x: point.x * zoom,
                                 y: point.y * zoom,
-                                coordinates: {  left: point.x.toFixed(1) +'см',
-                                                top: point.y.toFixed(1) +'см',
-                                right: width - point.x.toFixed(1) +'см',
-                                bottom: height - point.y.toFixed(1) +'см'}
+                                coordinates: {
+                                    left: point.x.toFixed(1),
+                                    top: point.y.toFixed(1),
+                                    right: (width - point.x).toFixed(1),
+                                    bottom: (height - point.y).toFixed(1)
+                                }
 
                             })}
                             onMouseLeave={() => setTooltip({...tooltip, visible: false})}
                             onMouseDown={() => handleDragStart(index)}
-                            onClick={() => clickPoint(point)}
-                            title={` X=${point.offsetX} см, Y=${point.offsetY} см`}
+                            onClick={() => resizePoint(point)}
+                            onContextMenu={(e) => {recolorPoint(e, point)}}
+                            // title={` X=${point.offsetX} см, Y=${point.offsetY} см`}
                         >
                             {showCoordinates && (
                                 <div style={{
@@ -219,12 +240,12 @@ const PointDisplay = () => {
                             boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.2)',
                             pointerEvents: 'none',
                             fontSize: '12px',
-                            textAlign:'left'
+                            textAlign: 'left'
                         }}>
-                           <p>top: {tooltip.coordinates.top}</p>
-                           <p>left: {tooltip.coordinates.left}</p>
-                           <p>bottom: {tooltip.coordinates.bottom}</p>
-                           <p>right: {tooltip.coordinates.right}</p>
+                            <p>top: {tooltip.coordinates.top} см</p>
+                            <p>left: {tooltip.coordinates.left} см</p>
+                            <p>bottom: {tooltip.coordinates.bottom} см</p>
+                            <p>right: {tooltip.coordinates.right} см</p>
                         </div>
                     )}
                 </div>
